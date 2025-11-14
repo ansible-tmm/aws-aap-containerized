@@ -93,6 +93,25 @@ export INSTALLER_ADMIN_PW="ansible123"
 export AAP_INCLUDE_CONTROLLER="true"
 export AAP_INCLUDE_EDA_CONTROLLER="false"
 export AAP_INCLUDE_AUTOMATION_HUB="false"
+export AAP_INCLUDE_LIGHTSPEED="false"
+```
+
+### Ansible Lightspeed Configuration
+
+To enable Ansible Lightspeed with intelligent assistant, you can use a model-as-a-service provider or deploy your own LLM:
+
+```bash
+# Enable Lightspeed
+export AAP_INCLUDE_LIGHTSPEED="true"
+
+# Required for chatbot functionality
+# For vLLM deployments, ensure URL ends with /v1
+export LIGHTSPEED_CHATBOT_MODEL_URL="http://your-llm-endpoint:8000/v1"
+export LIGHTSPEED_CHATBOT_MODEL_API_KEY="your-api-key"
+export LIGHTSPEED_CHATBOT_MODEL_ID="your-model-id"
+```
+
+**Note:** Lightspeed can be installed without chatbot configuration, but the intelligent assistant will not be functional until you provide credentials to either a model-as-a-service provider or your own deployed LLM.
 ```
 
 ## Access

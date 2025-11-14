@@ -53,10 +53,11 @@ export AAP_CACHE_PASSWORD="your-cache-password"
 #=============================================================================
 
 # Lightspeed Chatbot Model Configuration (REQUIRED for chatbot functionality)
-# These values must be set for Lightspeed intelligent assistant to work
-export LIGHTSPEED_CHATBOT_MODEL_URL=""        # e.g., "https://api.openai.com/v1"
-export LIGHTSPEED_CHATBOT_MODEL_API_KEY=""    # Your API key for the chatbot model
-export LIGHTSPEED_CHATBOT_MODEL_ID=""         # e.g., "gpt-4"
+# You can use a model-as-a-service provider or deploy your own LLM
+# For vLLM deployments, ensure the URL ends with /v1
+export LIGHTSPEED_CHATBOT_MODEL_URL=""        # e.g., "http://your-llm-endpoint:8000/v1"
+export LIGHTSPEED_CHATBOT_MODEL_API_KEY=""    # Your API key for the LLM
+export LIGHTSPEED_CHATBOT_MODEL_ID=""         # Your model ID
 
 # Advanced Configuration (optional - defaults are usually sufficient)
 # export LIGHTSPEED_ADMIN_USER="admin"
