@@ -10,9 +10,9 @@ instance_name: >-
   {{ lookup('env', 'INSTANCE_NAME') | default('aap-containerized', true) }}
 volume_size: >-
   {{ lookup('env', 'AWS_VOLUME_SIZE') | default('40', true) }}
-# RHEL 9 in us-east-1
+# RHEL 9.4+ in us-east-1
 ami_id: >-
-  {{ lookup('env', 'AWS_AMI_ID') | default('ami-0fe630eb857a6ec83', true) }}
+  {{ lookup('env', 'AWS_AMI_ID') | default('ami-0d85f16af633ab171', true) }}
 
 # Network Settings
 vpc_cidr: >-
@@ -60,6 +60,9 @@ aap_include_eda_controller: >-
 aap_include_automation_hub: >-
   {{ lookup('env', 'AAP_INCLUDE_AUTOMATION_HUB') |
      default('false', true) | bool }}
+aap_include_lightspeed: >-
+  {{ lookup('env', 'AAP_INCLUDE_LIGHTSPEED') |
+     default('false', true) | bool }}
 
 # Installation Options
 skip_system_update: >-
@@ -72,3 +75,26 @@ installer_directory: >-
      default('/tmp/ansible-automation-platform-containerized-setup', true) }}
 
 # Note: Manifest files can be uploaded later through the AAP web interface
+
+# Lightspeed Configuration (required if aap_include_lightspeed is true)
+lightspeed_admin_user: >-
+  {{ lookup('env', 'LIGHTSPEED_ADMIN_USER') |
+     default('admin', true) }}
+lightspeed_admin_email: >-
+  {{ lookup('env', 'LIGHTSPEED_ADMIN_EMAIL') |
+     default('admin@example.com', true) }}
+lightspeed_chatbot_model_url: >-
+  {{ lookup('env', 'LIGHTSPEED_CHATBOT_MODEL_URL') |
+     default('', true) }}
+lightspeed_chatbot_model_api_key: >-
+  {{ lookup('env', 'LIGHTSPEED_CHATBOT_MODEL_API_KEY') |
+     default('', true) }}
+lightspeed_chatbot_model_id: >-
+  {{ lookup('env', 'LIGHTSPEED_CHATBOT_MODEL_ID') |
+     default('', true) }}
+lightspeed_mcp_controller_enabled: >-
+  {{ lookup('env', 'LIGHTSPEED_MCP_CONTROLLER_ENABLED') |
+     default('false', true) | bool }}
+lightspeed_mcp_lightspeed_enabled: >-
+  {{ lookup('env', 'LIGHTSPEED_MCP_LIGHTSPEED_ENABLED') |
+     default('false', true) | bool }}

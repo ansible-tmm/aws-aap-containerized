@@ -21,6 +21,13 @@
 {{ installer_fqdn_hostname }} ansible_connection=local
 {% endif %}
 
+{% if aap_include_lightspeed|bool %}
+# This section is for your Red Hat Ansible Lightspeed host(s)
+# -------------------------------------------------------------
+[ansiblelightspeed]
+{{ installer_fqdn_hostname }} ansible_connection=local
+{% endif %}
+
 # This section is for your AAP Gateway host(s)
 # -----------------------------------------------------
 [automationgateway]
@@ -72,6 +79,32 @@ hub_pg_host={{ installer_fqdn_hostname }}
 hub_pg_password={{ installer_admin_pw }}
 automationhub_seed_collections=true
 automationhub_collection_seed_repository=validated
+{% endif %}
+
+{% if aap_include_lightspeed|bool %}
+# Red Hat Ansible Lightspeed - mandatory
+# For information about required and optional variables, refer to:
+# https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.6/html/containerized_installation/appendix-inventory-files-vars#lightspeed-variables
+lightspeed_admin_user={{ lightspeed_admin_user | default('admin') }}
+lightspeed_admin_password={{ installer_admin_pw }}
+lightspeed_admin_email={{ lightspeed_admin_email | default('admin@example.com') }}
+lightspeed_pg_host={{ installer_fqdn_hostname }}
+lightspeed_pg_password={{ installer_admin_pw }}
+
+# Ansible Lightspeed intelligent assistant - required for chatbot functionality
+{% if lightspeed_chatbot_model_url|default('') != '' and lightspeed_chatbot_model_api_key|default('') != '' and lightspeed_chatbot_model_id|default('') != '' %}
+lightspeed_chatbot_model_url={{ lightspeed_chatbot_model_url }}
+lightspeed_chatbot_model_api_key={{ lightspeed_chatbot_model_api_key }}
+lightspeed_chatbot_model_id={{ lightspeed_chatbot_model_id }}
+{% endif %}
+
+# Ansible Lightspeed MCP server integration - optional
+{% if lightspeed_mcp_controller_enabled|default('false')|bool %}
+lightspeed_mcp_controller_enabled={{ lightspeed_mcp_controller_enabled }}
+{% endif %}
+{% if lightspeed_mcp_lightspeed_enabled|default('false')|bool %}
+lightspeed_mcp_lightspeed_enabled={{ lightspeed_mcp_lightspeed_enabled }}
+{% endif %}
 {% endif %}
 
 # AAP Gateway - mandatory

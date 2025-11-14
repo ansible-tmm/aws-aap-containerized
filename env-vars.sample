@@ -36,6 +36,7 @@ export INSTALLER_FQDN_HOSTNAME="aap.example.org"
 export AAP_INCLUDE_CONTROLLER="true"        # Ansible Controller
 export AAP_INCLUDE_EDA_CONTROLLER="false"   # Event-Driven Ansible
 export AAP_INCLUDE_AUTOMATION_HUB="false"   # Automation Hub
+export AAP_INCLUDE_LIGHTSPEED="false"       # Ansible Lightspeed
 
 # Database Configuration (for production, consider external DB)
 export AAP_DATABASE_HOST="localhost"
@@ -46,6 +47,22 @@ export AAP_DATABASE_PASSWORD="your-db-password"
 # Cache Configuration (Redis)
 export AAP_CACHE_HOST="localhost"
 export AAP_CACHE_PASSWORD="your-cache-password"
+
+#=============================================================================
+# ANSIBLE LIGHTSPEED CONFIGURATION (if AAP_INCLUDE_LIGHTSPEED="true")
+#=============================================================================
+
+# Lightspeed Chatbot Model Configuration (REQUIRED for chatbot functionality)
+# These values must be set for Lightspeed intelligent assistant to work
+export LIGHTSPEED_CHATBOT_MODEL_URL=""        # e.g., "https://api.openai.com/v1"
+export LIGHTSPEED_CHATBOT_MODEL_API_KEY=""    # Your API key for the chatbot model
+export LIGHTSPEED_CHATBOT_MODEL_ID=""         # e.g., "gpt-4"
+
+# Advanced Configuration (optional - defaults are usually sufficient)
+# export LIGHTSPEED_ADMIN_USER="admin"
+# export LIGHTSPEED_ADMIN_EMAIL="admin@example.com"
+# export LIGHTSPEED_MCP_CONTROLLER_ENABLED="false"
+# export LIGHTSPEED_MCP_LIGHTSPEED_ENABLED="false"
 
 #=============================================================================
 # SETUP BUNDLE CONFIGURATION
@@ -82,6 +99,7 @@ echo "- FQDN: ${INSTALLER_FQDN_HOSTNAME}"
 echo "- Controller: ${AAP_INCLUDE_CONTROLLER}"
 echo "- EDA: ${AAP_INCLUDE_EDA_CONTROLLER}"
 echo "- Hub: ${AAP_INCLUDE_AUTOMATION_HUB}"
+echo "- Lightspeed: ${AAP_INCLUDE_LIGHTSPEED}"
 echo ""
 echo "Red Hat Registry configured: $([ -n "${REDHAT_REGISTRY_USERNAME}" ] && echo "✓" || echo "✗")"
 echo "Admin password set: $([ -n "${INSTALLER_ADMIN_PASSWORD}" ] && echo "✓" || echo "✗")"
