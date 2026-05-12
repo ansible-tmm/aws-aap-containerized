@@ -34,17 +34,17 @@ fi
 
 {% if letsencrypt_include_mcp | bool %}
 # Update MCP server certs
-if [ -d "${AAP_HOME}/mcp/etc" ]; then
+if [ -d "${AAP_HOME}/ansiblemcp/etc" ]; then
     install -o "${AAP_USER}" -g "${AAP_USER}" -m 0644 \
-        "${RENEWED_LINEAGE}/fullchain.pem" "${AAP_HOME}/mcp/etc/mcp.cert"
+        "${RENEWED_LINEAGE}/fullchain.pem" "${AAP_HOME}/ansiblemcp/etc/ansiblemcp.cert"
     install -o "${AAP_USER}" -g "${AAP_USER}" -m 0600 \
-        "${RENEWED_LINEAGE}/privkey.pem" "${AAP_HOME}/mcp/etc/mcp.key"
+        "${RENEWED_LINEAGE}/privkey.pem" "${AAP_HOME}/ansiblemcp/etc/ansiblemcp.key"
     log "MCP server certificates updated"
 
-    runuser -l "${AAP_USER}" -c "XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user restart mcp"
+    runuser -l "${AAP_USER}" -c "XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user restart ansiblemcp"
     log "MCP server restarted"
 else
-    log "WARNING: MCP directory not found at ${AAP_HOME}/mcp/etc — skipping"
+    log "WARNING: MCP directory not found at ${AAP_HOME}/ansiblemcp/etc — skipping"
 fi
 {% endif %}
 

@@ -33,7 +33,7 @@
 
 - name: deploy | Check if MCP server directory exists
   ansible.builtin.stat:
-    path: "/home/{{ letsencrypt_aap_user }}/aap/mcp/etc"
+    path: "/home/{{ letsencrypt_aap_user }}/aap/ansiblemcp/etc"
   register: __letsencrypt_mcp_dir
   when: letsencrypt_include_mcp | bool
 
@@ -50,17 +50,17 @@
         {{ item.src }} {{ item.dest }}
       loop:
         - src: "{{ letsencrypt_cert_dir }}/{{ letsencrypt_domain }}/fullchain.pem"
-          dest: "/home/{{ letsencrypt_aap_user }}/aap/mcp/etc/mcp.cert"
+          dest: "/home/{{ letsencrypt_aap_user }}/aap/ansiblemcp/etc/ansiblemcp.cert"
           mode: "0644"
         - src: "{{ letsencrypt_cert_dir }}/{{ letsencrypt_domain }}/privkey.pem"
-          dest: "/home/{{ letsencrypt_aap_user }}/aap/mcp/etc/mcp.key"
+          dest: "/home/{{ letsencrypt_aap_user }}/aap/ansiblemcp/etc/ansiblemcp.key"
           mode: "0600"
       changed_when: true
 
     - name: deploy | Restart MCP server
       ansible.builtin.command: >-
         runuser -l {{ letsencrypt_aap_user }}
-        -c 'XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user restart mcp'
+        -c 'XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user restart ansiblemcp'
       changed_when: true
 
 - name: deploy | Wait for gateway to start serving HTTPS
