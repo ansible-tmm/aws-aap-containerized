@@ -122,6 +122,7 @@ gateway_tls_key=/etc/letsencrypt/live/<your-domain>/privkey.pem
 # If using MCP server:
 mcp_tls_cert=/etc/letsencrypt/live/<your-domain>/fullchain.pem
 mcp_tls_key=/etc/letsencrypt/live/<your-domain>/privkey.pem
+mcp_tls_remote=true
 ```
 
 Without these settings, the installer regenerates self-signed certificates and the Let's Encrypt certs on disk go unused.
