@@ -1,0 +1,179 @@
+---
+# Pre-update tasks for existing AAP instances
+# Handles bundle detection/upload, SSL certificates, and inventory generation
+# Skips first-time setup (system packages) but updates hostname if changed
+
+# --- Hostname ---
+
+- name: pre-update | Set the system hostname
+  ansible.builtin.command: >-
+    hostnamectl set-hostname {{ installer_fqdn_hostname }}
+  become: true
+  changed_when: true
+
+- name: pre-update | Ensure /etc/hosts entry for FQDN
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^\s*127\.0\.0\.1\s+(?!localhost).*$'
+    line: "127.0.0.1 {{ installer_fqdn_hostname }}"
+    state: present
+    backup: true
+  become: true
+
+# --- Smart bundle detection ---
+
+- name: pre-update | Find AAP setup bundles in files directory
+  ansible.builtin.find:
+    paths: "{{ project_root | default(playbook_dir + '/..') }}/files"
+    patterns: "*ansible-automation-platform-containerized-setup-bundle*.tar.gz"
+    file_type: file
+  delegate_to: localhost
+  become: false
+  register: __update_bundle_files
+
+- name: pre-update | Fail if no bundles found
+  ansible.builtin.fail:
+    msg: >-
+      No AAP setup bundle found in files/ directory.
+      Expected pattern: *ansible-automation-platform-containerized-setup-bundle*.tar.gz
+  when: __update_bundle_files.files | length == 0
+
+- name: pre-update | Select bundle by explicit version
+  ansible.builtin.set_fact:
+    __update_matched_bundles: >-
+      {{ __update_bundle_files.files |
+         selectattr('path', 'search', aap_bundle_version) | list }}
+  when: aap_bundle_version | default('') != ''
+
+- name: pre-update | Fail if explicit version not found
+  ansible.builtin.fail:
+    msg: >-
+      No bundle matching version '{{ aap_bundle_version }}' found.
+      Available bundles:
+      {% for f in __update_bundle_files.files %}
+      - {{ f.path | basename }}
+      {% endfor %}
+  when:
+    - aap_bundle_version | default('') != ''
+    - __update_matched_bundles | length == 0
+
+- name: pre-update | Select latest bundle by filename
+  ansible.builtin.set_fact:
+    __update_selected_bundle: >-
+      {{ ((__update_matched_bundles | default(__update_bundle_files.files)) |
+          sort(attribute='path') | last) }}
+
+- name: pre-update | Set bundle facts
+  ansible.builtin.set_fact:
+    bundle_file: "{{ __update_selected_bundle }}"
+    bundle_filename: "{{ __update_selected_bundle.path | basename }}"
+
+- name: pre-update | Extract version from bundle filename
+  ansible.builtin.set_fact:
+    extracted_version: >-
+      {{ bundle_filename |
+         regex_replace('.*-(\d+\.\d+-\d+(\.\d+)?)-.*', '\1') }}
+
+- name: pre-update | Display selected bundle
+  ansible.builtin.debug:
+    msg:
+      - "Selected bundle: {{ bundle_filename }}"
+      - "Version: {{ extracted_version }}"
+      - "Size: {{ (bundle_file.size / 1024 / 1024) | round(1) }} MB"
+    verbosity: 0
+
+# --- Bundle upload and extraction ---
+
+- name: pre-update | Set extracted directory name
+  ansible.builtin.set_fact:
+    extracted_dir_name: "{{ bundle_filename | regex_replace('.tar.gz$', '') }}"
+
+- name: pre-update | Check if bundle is already extracted
+  ansible.builtin.stat:
+    path: "/tmp/{{ extracted_dir_name }}"
+  register: __update_extracted_bundle
+
+- name: pre-update | Upload and extract bundle
+  when: not __update_extracted_bundle.stat.exists
+  block:
+    - name: pre-update | Check if bundle tarball exists on target
+      ansible.builtin.stat:
+        path: "/tmp/{{ bundle_filename }}"
+        get_checksum: true
+        checksum_algorithm: sha256
+      register: __update_remote_bundle
+
+    - name: pre-update | Get local bundle checksum
+      ansible.builtin.stat:
+        path: "{{ bundle_file.path }}"
+        get_checksum: true
+        checksum_algorithm: sha256
+      delegate_to: localhost
+      become: false
+      register: __update_local_bundle
+
+    - name: pre-update | Copy bundle to target
+      ansible.builtin.copy:
+        src: "{{ bundle_file.path }}"
+        dest: "/tmp/{{ bundle_filename }}"
+        mode: '0644'
+      when: >-
+        not __update_remote_bundle.stat.exists or
+        __update_remote_bundle.stat.checksum != __update_local_bundle.stat.checksum
+
+    - name: pre-update | Extract setup bundle
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ bundle_filename }}"
+        dest: /tmp
+        remote_src: true
+
+    - name: pre-update | Remove bundle tarball to free disk space
+      ansible.builtin.file:
+        path: "/tmp/{{ bundle_filename }}"
+        state: absent
+
+- name: pre-update | Create symlink to extracted bundle directory
+  ansible.builtin.file:
+    src: "/tmp/{{ extracted_dir_name }}"
+    dest: "/tmp/ansible-automation-platform-containerized-setup"
+    state: link
+    force: true
+
+- name: pre-update | Set proper ownership of extracted files
+  ansible.builtin.file:
+    path: "/tmp/{{ extracted_dir_name }}"
+    owner: "{{ ansible_user | default('ec2-user') }}"
+    group: "{{ ansible_user | default('ec2-user') }}"
+    recurse: true
+    state: directory
+  become: true
+
+# --- SSL certificates ---
+
+- name: pre-update | Provision Let's Encrypt certificates
+  ansible.builtin.include_role:
+    name: letsencrypt
+  when: enable_letsencrypt | default(false) | bool
+
+# --- Generate installer inventory ---
+
+- name: pre-update | Check if installer directory exists
+  ansible.builtin.stat:
+    path: "{{ installer_directory }}"
+  register: __update_installer_dir
+
+- name: pre-update | Fail if installer directory does not exist
+  ansible.builtin.fail:
+    msg: >-
+      Installer directory {{ installer_directory }} does not exist.
+      Bundle extraction may have failed.
+  when: not __update_installer_dir.stat.exists
+
+- name: pre-update | Generate AAP installer inventory
+  ansible.builtin.template:
+    src: >-
+      {{ project_root |
+         default(playbook_dir + '/..') }}/playbooks/aap/templates/inventory.j2
+    dest: "{{ installer_directory }}/inventory.custom"
+    mode: '0644'
+    backup: true

@@ -1,0 +1,102 @@
+---
+# Update/upgrade an existing AAP containerized instance
+# Handles bundle upgrades, SSL changes, and component toggles
+# without re-creating infrastructure or running first-time setup
+#
+# Usage:
+#   source env-vars.sh
+#   ansible-playbook -i inventory/<instance>-hosts.yml \
+#     playbooks/update-aap.yml -e @extra-vars.yml
+#
+# For a specific bundle version:
+#   ansible-playbook -i inventory/<instance>-hosts.yml \
+#     playbooks/update-aap.yml -e @extra-vars.yml -e aap_bundle_version=2.6-8
+
+- name: Update AAP Containerized Instance
+  hosts: aap_nodes
+  become: true
+  gather_facts: true
+  vars_files:
+    - "{{ project_root | default(playbook_dir + '/..') }}/extra-vars.yml"
+
+  pre_tasks:
+    - name: Verify SSH connectivity
+      ansible.builtin.ping:
+
+    - name: Display update parameters
+      ansible.builtin.debug:
+        msg:
+          - "Updating AAP on {{ inventory_hostname }} ({{ ansible_host }})"
+          - "Target FQDN: {{ installer_fqdn_hostname }}"
+          - "Bundle version: {{ aap_bundle_version | default('latest available') }}"
+          - "Let's Encrypt: {{ enable_letsencrypt | default(false) }}"
+          - "Components: Controller={{ aap_include_controller }}, EDA={{ aap_include_eda_controller }}, Hub={{ aap_include_automation_hub }}, MCP={{ aap_include_mcp_server }}"
+        verbosity: 0
+
+  tasks:
+    - name: Import pre-update tasks
+      ansible.builtin.import_tasks: aap/tasks/pre-update.yml
+
+    - name: Display installer progress
+      ansible.builtin.debug:
+        msg: "Running AAP installer (this may take 10-15 minutes)..."
+        verbosity: 0
+
+    - name: Run AAP containerized installer
+      ansible.builtin.shell: |
+        set -o pipefail
+        cd {{ installer_directory }}
+        timeout 1800 bash -c "
+        set -o pipefail
+        ANSIBLE_COLLECTIONS_PATH={{ installer_directory }}/collections \
+        ansible-playbook -v -i inventory.custom \
+        ansible.containerized_installer.install 2>&1 | tee aap_install.log
+        exit_code=\${PIPESTATUS[0]}
+        echo \"Installation completed with exit code: \$exit_code\"
+        exit \$exit_code
+        "
+      environment:
+        ANSIBLE_HOST_KEY_CHECKING: 'False'
+      become: false
+      register: __update_installer_result
+      changed_when: __update_installer_result.rc == 0
+      failed_when: >-
+        __update_installer_result.rc != 0 and
+        __update_installer_result.rc != 124
+      async: 2400
+      poll: 30
+      timeout: 2400
+
+    - name: Display installer timeout warning
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Installer timed out after 30 minutes.
+          Check logs: {{ installer_directory }}/aap_install.log
+        verbosity: 0
+      when:
+        - __update_installer_result is defined
+        - __update_installer_result.rc == 124
+
+    - name: Import post-installation verification
+      ansible.builtin.import_tasks: aap/tasks/post-install.yml
+      when:
+        - __update_installer_result is defined
+        - __update_installer_result.rc == 0
+
+  post_tasks:
+    - name: Display update result
+      ansible.builtin.debug:
+        msg:
+          - "========================================================"
+          - "AAP UPDATE {{ 'COMPLETE' if __update_installer_result.rc == 0 else 'FAILED' }}"
+          - "========================================================"
+          - ""
+          - "Instance: {{ installer_fqdn_hostname }}"
+          - "Bundle: {{ bundle_filename | default('unknown') }}"
+          - "Version: {{ extracted_version | default('unknown') }}"
+          - ""
+          - "Web Interface: https://{{ ansible_host }}"
+          - "API Endpoint: https://{{ ansible_host }}/api/gateway/v1/"
+          - "========================================================"
+        verbosity: 0
+      when: __update_installer_result is defined
