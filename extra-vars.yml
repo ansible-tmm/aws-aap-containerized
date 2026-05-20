@@ -35,7 +35,7 @@ common_tags:
 
 ### AAP Installer Variables
 installer_admin_pw: >-
-  {{ lookup('env', 'INSTALLER_ADMIN_PASSWORD') | default('ansible123', true) }}
+  {{ lookup('env', 'INSTALLER_ADMIN_PASSWORD') | default(lookup('pipe', 'openssl rand -hex 16'), true) }}
 installer_fqdn_hostname: >-
   {{ lookup('env', 'INSTALLER_FQDN_HOSTNAME') |
      default('aap.example.org', true) }}
