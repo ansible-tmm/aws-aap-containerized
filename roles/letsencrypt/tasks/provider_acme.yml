@@ -4,6 +4,16 @@
 
 # --- Key and CSR generation ---
 
+- name: acme | Create base letsencrypt directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/letsencrypt
+    - "{{ letsencrypt_cert_dir }}"
+  become: true
+
 - name: acme | Create ACME key directory
   ansible.builtin.file:
     path: "{{ letsencrypt_acme_key_dir }}"
@@ -273,6 +283,19 @@
       Certificate for {{ letsencrypt_domain }} is already expired.
       Not after: {{ __letsencrypt_acme_cert_info.not_after }}
   when: __letsencrypt_acme_cert_info.expired
+
+- name: acme | Set certificate files readable by AAP user
+  ansible.builtin.file:
+    path: "{{ letsencrypt_cert_dir }}/{{ letsencrypt_domain }}/{{ item.name }}"
+    owner: root
+    group: "{{ letsencrypt_aap_user }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: fullchain.pem, mode: '0644' }
+    - { name: cert.pem, mode: '0644' }
+    - { name: chain.pem, mode: '0644' }
+    - { name: privkey.pem, mode: '0640' }
+  become: true
 
 # --- Renewal setup ---
 

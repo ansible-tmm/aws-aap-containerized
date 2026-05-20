@@ -118,6 +118,7 @@ If you re-run the AAP containerized installer manually (e.g., `./setup.sh`), inc
 ```ini
 gateway_tls_cert=/etc/letsencrypt/live/<your-domain>/fullchain.pem
 gateway_tls_key=/etc/letsencrypt/live/<your-domain>/privkey.pem
+gateway_tls_remote=true
 
 # If using MCP server:
 mcp_tls_cert=/etc/letsencrypt/live/<your-domain>/fullchain.pem
