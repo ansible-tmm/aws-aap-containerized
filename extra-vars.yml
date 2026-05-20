@@ -35,15 +35,15 @@ common_tags:
 
 ### AAP Installer Variables
 installer_admin_pw: >-
-  {{ lookup('env', 'INSTALLER_ADMIN_PW') | default('ansible123', true) }}
+  {{ lookup('env', 'INSTALLER_ADMIN_PASSWORD') | default('ansible123', true) }}
 installer_fqdn_hostname: >-
   {{ lookup('env', 'INSTALLER_FQDN_HOSTNAME') |
      default('aap.example.org', true) }}
 registry_username: >-
-  {{ lookup('env', 'INSTALLER_REGISTRY_USERNAME') |
+  {{ lookup('env', 'REDHAT_REGISTRY_USERNAME') |
      default('YOUR_USERNAME', true) }}
 registry_password: >-
-  {{ lookup('env', 'INSTALLER_REGISTRY_PASSWORD') |
+  {{ lookup('env', 'REDHAT_REGISTRY_PASSWORD') |
      default('YOUR_PASSWORD', true) }}
 
 # Local setup bundle (pre-downloaded)

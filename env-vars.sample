@@ -9,7 +9,7 @@
 #=============================================================================
 unset AWS_REGION AWS_PROFILE \
   AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_CREDENTIAL_EXPIRATION \
-  INSTANCE_NAME INSTANCE_TYPE OWNER \
+  INSTANCE_NAME AWS_INSTANCE_TYPE OWNER \
   REDHAT_REGISTRY_USERNAME REDHAT_REGISTRY_PASSWORD \
   INSTALLER_ADMIN_PASSWORD INSTALLER_FQDN_HOSTNAME INSTALLER_DIRECTORY \
   AAP_INCLUDE_CONTROLLER AAP_INCLUDE_EDA_CONTROLLER AAP_INCLUDE_AUTOMATION_HUB \
@@ -54,7 +54,7 @@ export AWS_PROFILE="aap-deploy"
 
 # EC2 Instance Configuration
 export INSTANCE_NAME="your-username-aap-containerized"  # e.g., "jdoe-aap-containerized"
-export INSTANCE_TYPE="t3.xlarge"                        # Minimum recommended for AAP
+export AWS_INSTANCE_TYPE="t3.xlarge"                        # Minimum recommended for AAP
 export OWNER="your-username"                            # e.g., "jdoe" (for AWS tagging)
 
 #=============================================================================
@@ -180,7 +180,7 @@ export INSTALL_PRODUCT_DEMOS="true"
 echo "Environment variables set for AAP installation:"
 echo "- AWS Region: ${AWS_REGION}"
 echo "- Instance Name: ${INSTANCE_NAME}"
-echo "- Instance Type: ${INSTANCE_TYPE}"
+echo "- Instance Type: ${AWS_INSTANCE_TYPE}"
 echo "- Owner: ${OWNER}"
 echo "- FQDN: ${INSTALLER_FQDN_HOSTNAME}"
 echo "- Controller: ${AAP_INCLUDE_CONTROLLER}"
